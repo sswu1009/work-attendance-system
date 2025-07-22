@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<!-- <!DOCTYPE html>
 <html lang="zh-Hant">
 <head>
     <meta charset="UTF-8">
@@ -38,3 +38,137 @@
 </body>
 </html>
  
+ -->
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <title>每日出工統計表</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            font-family: 'Helvetica Neue', 'Noto Sans TC', sans-serif;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            background: #fdfdf7; /* 象牙白底 */
+            color: #333;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            padding-top: 40px;
+        }
+
+        h1 {
+            margin-bottom: 30px;
+            color: #4b4b4b;
+            font-weight: 600;
+        }
+
+        form {
+            background: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(10px);
+            padding: 30px;
+            border-radius: 16px;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.05);
+            width: 90%;
+            max-width: 500px;
+        }
+
+        #inputs > div {
+            margin-bottom: 15px;
+        }
+
+        input, select {
+            width: calc(100% - 10px);
+            padding: 10px;
+            margin-top: 5px;
+            border-radius: 10px;
+            border: 1px solid #ccc;
+            font-size: 16px;
+            background-color: #fff;
+            transition: border-color 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        input:focus, select:focus {
+            border-color: #a67c52;
+            outline: none;
+            box-shadow: 0 0 5px rgba(166, 124, 82, 0.4);
+        }
+
+        button {
+            width: 100%;
+            padding: 12px;
+            font-size: 16px;
+            border-radius: 10px;
+            border: none;
+            cursor: pointer;
+            margin-top: 10px;
+            transition: background-color 0.3s ease, transform 0.1s ease;
+        }
+
+        button[type="button"] {
+            background: #fff;
+            color: #a67c52;
+            border: 2px dashed #a67c52;
+        }
+
+        button[type="button"]:hover {
+            background: #f7f2ec;
+        }
+
+        button[type="submit"] {
+            background-color: #a67c52;
+            color: white;
+        }
+
+        button[type="submit"]:hover {
+            background-color: #8e6841;
+        }
+
+        @media (max-width: 600px) {
+            form {
+                padding: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <h1>📋 每日出工統計表輸入</h1>
+    <form method="POST">
+        <div id="inputs">
+            <div>
+                工號：
+                <input name="emp_id" required>
+                原因：
+                <select name="reason">
+                    {% for r in reasons %}
+                    <option>{{ r }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+        </div>
+        <button type="button" onclick="addRow()">➕ 新增一列</button>
+        <button type="submit">🚀 產生出工表</button>
+    </form>
+
+    <script>
+        function addRow() {
+            const div = document.createElement('div');
+            div.innerHTML = `
+                工號：
+                <input name="emp_id" required>
+                原因：
+                <select name="reason">
+                    {% for r in reasons %}
+                    <option>{{ r }}</option>
+                    {% endfor %}
+                </select>`;
+            document.getElementById('inputs').appendChild(div);
+        }
+    </script>
+</body>
+</html>
