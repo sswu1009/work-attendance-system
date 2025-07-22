@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <title>每日出工統計表</title>
+</head>
+<body>
+    <h1>📋 每日出工統計表輸入</h1>
+    <form method="POST">
+        <div id="inputs">
+            <div>
+                工號：<input name="emp_id" required>
+                原因：
+                <select name="reason">
+                    {% for r in reasons %}
+                    <option>{{ r }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+        </div>
+        <br>
+        <button type="button" onclick="addRow()">➕ 新增一列</button>
+        <button type="submit">🚀 產生出工表</button>
+    </form>
+
+    <script>
+        function addRow() {
+            const div = document.createElement('div');
+            div.innerHTML = `工號：<input name="emp_id" required> 原因：
+                <select name="reason">
+                    {% for r in reasons %}
+                    <option>{{ r }}</option>
+                    {% endfor %}
+                </select>`;
+            document.getElementById('inputs').appendChild(div);
+        }
+    </script>
+</body>
+</html>
