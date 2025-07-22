@@ -51,10 +51,19 @@ def update_excel(absentees):
 
     # 寫入休假調查表
     insert_row = 5
+    serial_number = 1  # 從 1 開始的序號
+    today = datetime.now().strftime("%m/%d")
+
     for emp_id, reason in absentees:
-        ws_log.cell(row=insert_row, column=4).value = emp_id
-        ws_log.cell(row=insert_row, column=5).value = reason
+        ws_log.cell(row=insert_row, column=1).value = today           # 第一欄：當天日期
+        ws_log.cell(row=insert_row, column=2).value = serial_number   # 第二欄：序號
+        ws_log.cell(row=insert_row, column=3).value = "GC01"          # 第三欄：固定填 GC01
+        ws_log.cell(row=insert_row, column=4).value = emp_id          # 第四欄：工號
+        ws_log.cell(row=insert_row, column=5).value = reason          # 第五欄：未出工原因
+        ws_log.cell(row=insert_row, column=6).value = "宿舍"          # 第六欄：固定填 宿舍
+
         insert_row += 1
+        serial_number += 1
 
     # 寫入統計欄位
     ws_main["C62"].value = count_map["體檢"]
