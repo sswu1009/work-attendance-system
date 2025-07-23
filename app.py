@@ -13,8 +13,8 @@ TEMPLATE_PATH = config["input_file"]
 OUTPUT_FOLDER = config["output_folder"]
 
 REASON_OPTIONS = [
-    "體檢", "休假", "年休返泰", "事假返鄉",
-    "工傷", "曠職", "病假", "待返",
+    "休假", "曠職", "體檢", "年休返泰",
+    "事假返鄉", "工傷", "病假", "待返",
     "遣返", "提前解聘", "逃跑", "調派"
 ]
 
@@ -29,10 +29,9 @@ def update_excel(absentees,weather):
 
     # 各種原因對應顏色
     fill_colors = {
-        "請假": "FFFF00",  # 黃色
+        "休假": "FFFF00",  # 黃色
         "曠職": "FF6666",  # 紅色
         "體檢": "B7DEE8",  # 天藍
-        "休假": "F4CCCC",  # 淺粉
         "年休返泰": "D9EAD3",  # 淺綠
         "事假返鄉": "D0E0E3",  # 灰藍
         "工傷": "FFD966",  # 淺黃
@@ -104,13 +103,14 @@ def update_excel(absentees,weather):
     ws_main["C64"].value = count_map["遣返"]
     ws_main["K62"].value = count_map["休假"]
     ws_main["K63"].value = count_map["曠職"]
-    ws_main["K64"].value = 110 - len(absentees)  # 出工人數
+    ws_main["K64"].value = count_map["提前解聘"]
     ws_main["T62"].value = count_map["年休返泰"]
     ws_main["T63"].value = count_map["病假"]
     ws_main["T64"].value = count_map["逃跑"]
     ws_main["AA62"].value = count_map["事假返鄉"]
     ws_main["AA63"].value = count_map["待返"]
     ws_main["AA64"].value = count_map["調派"]
+    ws_main["L66"].value = 110 - len(absentees)  # 出工人數
 
     output_file = f"{OUTPUT_FOLDER}/每天出工統計表_{today.strftime('%Y-%m-%d')}.xlsx"
     wb.save(output_file)
