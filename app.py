@@ -110,7 +110,7 @@ def update_excel(absentees,weather):
     ws_main["AA62"].value = count_map["事假返鄉"]
     ws_main["AA63"].value = count_map["待返"]
     ws_main["AA64"].value = count_map["調派"]
-    ws_main["L66"].value = 110 - len(absentees)  # 出工人數
+    ws_main["L66"].value = ws_main["D66"].value - len(absentees)  # 出工人數
 
     output_file = f"{OUTPUT_FOLDER}/每天出工統計表_{today.strftime('%Y-%m-%d')}.xlsx"
     wb.save(output_file)
