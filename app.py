@@ -18,7 +18,7 @@ REASON_OPTIONS = [
     "遣返", "提前解聘", "逃跑", "調派"
 ]
 
-def update_excel(absentees,weather):
+def update_excel(absentees, weather, manager_name=None):
     wb = openpyxl.load_workbook(TEMPLATE_PATH)
     ws_main = wb["出勤表"]
     ws_log = wb["休假調查表(新)"]
@@ -40,7 +40,7 @@ def update_excel(absentees,weather):
         "遣返": "F6B26B",  # 橘
         "提前解聘": "A4C2F4",  # 藍紫
         "逃跑": "E06666",  # 深紅
-        "調派": "76A5AF"  # 墨綠藍
+        "調派": "76A5AF"   # 墨綠藍
     }
 
     count_map = {key: 0 for key in REASON_OPTIONS}
@@ -78,7 +78,6 @@ def update_excel(absentees,weather):
     if weather in weather_map:
         ws_main[weather_map[weather]].value = "X"
 
-
     # 寫入 I2 日期（yyyy年mm月dd日）
     ws_log["I2"].value = today.strftime("%Y年%m月%d日")
 
@@ -110,7 +109,16 @@ def update_excel(absentees,weather):
     ws_main["AA62"].value = count_map["事假返鄉"]
     ws_main["AA63"].value = count_map["待返"]
     ws_main["AA64"].value = count_map["調派"]
-    ws_main["L66"].value = int(ws_main["D66"].value or 0) - len(absentees)  # 出工人數
+
+    # 出工人數 = D66 - 缺勤人數
+    ws_main["L66"].value = int(ws_main["D66"].value or 0) - len(absentees)
+
+    # ✅ 新增：寫入「移工管理員：<姓名>」到 S69
+    if manager_name:
+        ws_main["S69"].value = f"移工管理員：{manager_name}"
+
+    if not os.path.exists(OUTPUT_FOLDER):
+        os.makedirs(OUTPUT_FOLDER, exist_ok=True)
 
     output_file = f"{OUTPUT_FOLDER}/每天出工統計表_{today.strftime('%Y-%m-%d')}.xlsx"
     wb.save(output_file)
@@ -123,8 +131,13 @@ def index():
         reasons = request.form.getlist('reason')
         absentees = [(emp_ids[i], reasons[i]) for i in range(len(emp_ids)) if emp_ids[i].strip()]
         weather = request.form.get('weather')
-        result_path = update_excel(absentees, weather)
+
+        # 取得移工管理員
+        manager_name = request.form.get('manager', '').strip()
+
+        result_path = update_excel(absentees, weather, manager_name)
         return send_file(result_path, as_attachment=True)
+
     return render_template('index.html', reasons=REASON_OPTIONS)
 
 if __name__ == '__main__':
