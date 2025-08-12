@@ -56,6 +56,11 @@
       transition: border-color 0.3s ease, box-shadow 0.3s ease;
     }
 
+    label {
+      min-width: 110px;
+      color: #444;
+    }
+
     input:focus, select:focus {
       border-color: #a67c52;
       outline: none;
@@ -121,10 +126,11 @@
 </head>
 <body>
   <h1>📋 每日出工統計表輸入</h1>
-  <form method="POST">
+  <form method="POST" onsubmit="event.preventDefault(); alert('預覽模式：不會真的送出');">
     <!-- 天氣選項 -->
     <div class="row">
-      <select name="weather" required>
+      <label for="weather">天氣</label>
+      <select id="weather" name="weather" required>
         <option value="" disabled selected>請選擇天氣</option>
         <option value="晴">☀️ 晴</option>
         <option value="陰">☁️ 陰</option>
@@ -132,14 +138,30 @@
       </select>
     </div>
 
+    <!-- 移工管理員欄位 -->
+    <div class="row">
+      <label for="manager">移工管理員</label>
+      <input id="manager" name="manager" placeholder="移工管理員姓名" required>
+    </div>
+
     <!-- 出工資料 -->
+    <h3 style="margin: 10px 0 0 0; color:#555;">缺勤名單</h3>
     <div id="inputs">
       <div class="row">
         <input name="emp_id" placeholder="工號" required>
         <select name="reason" required>
-          {% for r in reasons %}
-          <option>{{ r }}</option>
-          {% endfor %}
+          <option>休假</option>
+          <option>曠職</option>
+          <option>體檢</option>
+          <option>年休返泰</option>
+          <option>事假返鄉</option>
+          <option>工傷</option>
+          <option>病假</option>
+          <option>待返</option>
+          <option>遣返</option>
+          <option>提前解聘</option>
+          <option>逃跑</option>
+          <option>調派</option>
         </select>
         <button type="button" class="delete-btn" onclick="removeRow(this)">🗑️刪除這筆</button>
       </div>
@@ -156,9 +178,18 @@
       div.innerHTML = `
         <input name="emp_id" placeholder="工號" required>
         <select name="reason" required>
-          {% for r in reasons %}
-          <option>{{ r }}</option>
-          {% endfor %}
+          <option>休假</option>
+          <option>曠職</option>
+          <option>體檢</option>
+          <option>年休返泰</option>
+          <option>事假返鄉</option>
+          <option>工傷</option>
+          <option>病假</option>
+          <option>待返</option>
+          <option>遣返</option>
+          <option>提前解聘</option>
+          <option>逃跑</option>
+          <option>調派</option>
         </select>
         <button type="button" class="delete-btn" onclick="removeRow(this)">🗑️刪除這筆</button>
       `;
