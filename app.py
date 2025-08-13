@@ -18,6 +18,9 @@ REASON_OPTIONS = [
     "遣返", "提前解聘", "逃跑", "調派"
 ]
 
+# ✅ 固定寫死的管理員名單（無預設值，前端會有「請選擇管理員」）
+MANAGER_OPTIONS = ["鄭豐原", "黃國昌", "柯文哲"]
+
 def update_excel(absentees, weather, manager_name=None):
     wb = openpyxl.load_workbook(TEMPLATE_PATH)
     ws_main = wb["出勤表"]
@@ -63,29 +66,24 @@ def update_excel(absentees, weather, manager_name=None):
             else:
                 upper_cell.value = "V"
 
-    # 寫入 C4 日期（yyyy年mm月dd日 星期幾）
+    # C4：yyyy年mm月dd日 星期X
     weekdays = ['一', '二', '三', '四', '五', '六', '日']
     today = datetime.now()
     formatted_date = today.strftime(f"%Y年%m月%d日 星期{weekdays[today.weekday()]}")
     ws_main["C4"].value = formatted_date
 
-    # 填入天氣對應欄位 P4/S4/V4
-    weather_map = {
-        "晴": "P4",
-        "陰": "S4",
-        "雨": "V4"
-    }
+    # 天氣：P4/S4/V4 打 X
+    weather_map = {"晴": "P4", "陰": "S4", "雨": "V4"}
     if weather in weather_map:
         ws_main[weather_map[weather]].value = "X"
 
-    # 寫入 I2 日期（yyyy年mm月dd日）
+    # 休假調查表日期 I2
     ws_log["I2"].value = today.strftime("%Y年%m月%d日")
 
-    # 寫入休假調查表
+    # 休假調查表列表
     insert_row = 5
     serial_number = 1
     today_str = today.strftime("%m/%d")
-
     for emp_id, reason in absentees:
         ws_log.cell(row=insert_row, column=1).value = today_str
         ws_log.cell(row=insert_row, column=2).value = serial_number
@@ -113,9 +111,9 @@ def update_excel(absentees, weather, manager_name=None):
     # 出工人數 = D66 - 缺勤人數
     ws_main["L66"].value = int(ws_main["D66"].value or 0) - len(absentees)
 
-    # ✅ 新增：寫入「移工管理員：<姓名>」到 S69
+    # S69：移工管理員：吳廷湘 <姓名>（保持原樣）
     if manager_name:
-        ws_main["S69"].value = f"移工管理員：{manager_name}"
+        ws_main["S69"].value = f"移工管理員：吳廷湘 {manager_name}"
 
     if not os.path.exists(OUTPUT_FOLDER):
         os.makedirs(OUTPUT_FOLDER, exist_ok=True)
@@ -132,13 +130,14 @@ def index():
         absentees = [(emp_ids[i], reasons[i]) for i in range(len(emp_ids)) if emp_ids[i].strip()]
         weather = request.form.get('weather')
 
-        # 取得移工管理員
+        # 取得移工管理員（沒選會是 ""）
         manager_name = request.form.get('manager', '').strip()
 
         result_path = update_excel(absentees, weather, manager_name)
         return send_file(result_path, as_attachment=True)
 
-    return render_template('index.html', reasons=REASON_OPTIONS)
+    # ✅ managers 從後端提供給前端（畫布模板已用 Jinja 渲染）
+    return render_template('index.html', reasons=REASON_OPTIONS, managers=MANAGER_OPTIONS)
 
 if __name__ == '__main__':
     app.run(debug=True)
