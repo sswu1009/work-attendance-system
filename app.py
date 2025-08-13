@@ -19,7 +19,7 @@ REASON_OPTIONS = [
 ]
 
 # ✅ 固定寫死的管理員名單（無預設值，前端會有「請選擇管理員」）
-MANAGER_OPTIONS = ["鄭豐原", "黃國昌", "柯文哲"]
+MANAGER_OPTIONS = ["鄭峰源", "楊國新"]
 
 def update_excel(absentees, weather, manager_name=None):
     wb = openpyxl.load_workbook(TEMPLATE_PATH)
