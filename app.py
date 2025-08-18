@@ -21,6 +21,45 @@ REASON_OPTIONS = [
 # ✅ 固定寫死的管理員名單（無預設值，前端會有「請選擇管理員」）
 MANAGER_OPTIONS = ["鄭峰源", "楊國新"]
 
+# ---------------------------------------
+# 只為了工號卡控而新增的工具函式（最小變更）
+# ---------------------------------------
+def _normalize_emp_id(v):
+    """將 Excel 讀到的工號值轉成字串工號。
+    例：22666.0 -> '22666'、空白/None -> ''、其他型別 -> 去空白字串"""
+    if v is None:
+        return ""
+    if isinstance(v, (int,)):
+        return str(v)
+    if isinstance(v, float):
+        if v.is_integer():
+            return str(int(v))
+        # 若實務上不會是小數工號，直接四捨五入或取整都不合理，改成去掉小數點表示
+        return str(int(v))
+    return str(v).strip()
+
+def load_valid_emp_ids():
+    """從『出勤表』(B/H/N/T/Z 欄，6~61 列)載入所有有效工號，供前端/後端檢查。"""
+    wb = openpyxl.load_workbook(TEMPLATE_PATH, data_only=True)
+    ws_main = wb["出勤表"]
+    emp_columns = [2, 8, 14, 20, 26]  # B, H, N, T, Z
+    start_row, end_row = 6, 61
+
+    valid = set()
+    for row in range(start_row, end_row + 1):
+        for col in emp_columns:
+            eid = _normalize_emp_id(ws_main.cell(row=row, column=col).value)
+            if eid:
+                valid.add(eid)
+    wb.close()
+    return valid
+
+# 啟動時載入一次（若日後名冊會改，可加一個手動刷新端點再更新此集合）
+VALID_EMP_IDS = load_valid_emp_ids()
+
+# ---------------------------------------
+# 原本的 Excel 寫入流程（未動核心邏輯）
+# ---------------------------------------
 def update_excel(absentees, weather, manager_name=None):
     wb = openpyxl.load_workbook(TEMPLATE_PATH)
     ws_main = wb["出勤表"]
@@ -52,8 +91,8 @@ def update_excel(absentees, weather, manager_name=None):
         for col in emp_columns:
             emp_cell = ws_main.cell(row=row, column=col)
             upper_cell = ws_main.cell(row=row, column=col + 1)
-            emp_id = str(emp_cell.value).strip() if emp_cell.value else ""
-            if len(emp_id) < 3:
+            emp_id = _normalize_emp_id(emp_cell.value)
+            if len(emp_id) < 1:  # 保持原本「空就跳過」邏輯
                 continue
 
             if emp_id in reason_map:
@@ -122,22 +161,38 @@ def update_excel(absentees, weather, manager_name=None):
     wb.save(output_file)
     return output_file
 
+# ---------------------------------------
+# 路由（只加了工號卡控；其餘不動）
+# ---------------------------------------
 @app.route('/', methods=['GET', 'POST'])
 def index():
     if request.method == 'POST':
         emp_ids = request.form.getlist('emp_id')
         reasons = request.form.getlist('reason')
-        absentees = [(emp_ids[i], reasons[i]) for i in range(len(emp_ids)) if emp_ids[i].strip()]
         weather = request.form.get('weather')
-
-        # 取得移工管理員（沒選會是 ""）
         manager_name = request.form.get('manager', '').strip()
 
-        result_path = update_excel(absentees, weather, manager_name)
-        return send_file(result_path, as_attachment=True)
+        # ✅ 只做工號卡控：1) 僅數字 2) 必須存在於出勤表
+        errors = []
+        cleaned_emp_ids = []
+        for i, raw in enumerate(emp_ids, start=1):
+            eid = (raw or "").strip()
+            if not eid:   # 空白行讓原本邏輯去處理（下面組 absentees 有 .strip()）
+                cleaned_emp_ids.append(eid)
+                continue
+            if not eid.isdigit():
+                errors.append(f"第 {i} 列工號需為純數字：{eid}")
+            else:
+                # 與名冊比對前，確保一致的字串格式
+                if eid not in VALID_EMP_IDS:
+                    errors.append(f"第 {i} 列工號不存在於出勤表：{eid}")
+            cleaned_emp_ids.append(eid)
 
-    # ✅ managers 從後端提供給前端（畫布模板已用 Jinja 渲染）
-    return render_template('index.html', reasons=REASON_OPTIONS, managers=MANAGER_OPTIONS)
-
-if __name__ == '__main__':
-    app.run(debug=True)
+        if errors:
+            # 驗證失敗：回傳頁面顯示錯誤，不產生檔案
+            filled_rows = list(zip(emp_ids, reasons))
+            return render_template(
+                'index.html',
+                reasons=REASON_OPTIONS,
+                managers=MANAGER_OPTIONS,
+                valid_emp_ids=VALID_EMP_IDS,  #
