@@ -195,4 +195,25 @@ def index():
                 'index.html',
                 reasons=REASON_OPTIONS,
                 managers=MANAGER_OPTIONS,
-                valid_emp_ids=VALID_EMP_IDS,  #
+                valid_emp_ids=VALID_EMP_IDS,  # 前端也可即時檢查
+                errors=errors,
+                filled_rows=filled_rows,
+                selected_weather=weather,
+                selected_manager=manager_name
+            ), 400
+
+        # ✅ 維持你原本的組裝邏輯（只跳過空白工號）
+        absentees = [(cleaned_emp_ids[i], reasons[i]) for i in range(len(cleaned_emp_ids)) if cleaned_emp_ids[i].strip()]
+        result_path = update_excel(absentees, weather, manager_name)
+        return send_file(result_path, as_attachment=True)
+
+    # GET：把 valid_emp_ids 傳給前端（供即時檢查用）
+    return render_template(
+        'index.html',
+        reasons=REASON_OPTIONS,
+        managers=MANAGER_OPTIONS,
+        valid_emp_ids=VALID_EMP_IDS
+    )
+
+if __name__ == '__main__':
+    app.run(debug=True)
