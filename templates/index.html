@@ -342,7 +342,7 @@
       if (!ok){
         e.preventDefault();
         if (firstBad) firstBad.focus();
-        showToast('請修正紅框工號（僅數字，且需存在於名冊）');
+        showToast('請修正紅框工號（只能輸入數字，或者這個工號不存在）');
       }
     });
 
