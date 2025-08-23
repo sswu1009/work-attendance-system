@@ -3,6 +3,19 @@ import openpyxl, os, json
 from datetime import datetime
 from openpyxl.styles import PatternFill
 
+# ===== 時區設定（台灣） =====
+# 優先使用 Python 3.9+ 的 zoneinfo；若環境較舊，退回 pytz
+try:
+    from zoneinfo import ZoneInfo  # Python 3.9+
+    TAIPEI_TZ = ZoneInfo("Asia/Taipei")
+except Exception:  # pragma: no cover
+    import pytz
+    TAIPEI_TZ = pytz.timezone("Asia/Taipei")
+
+def now_tw():
+    """回傳台灣時區的現在時間（timezone-aware）。"""
+    return datetime.now(TAIPEI_TZ)
+
 app = Flask(__name__)
 
 # ---------------------------
@@ -67,7 +80,7 @@ def load_valid_emp_ids():
 VALID_EMP_IDS = load_valid_emp_ids()
 
 # ---------------------------
-# 原本 Excel 寫入流程（邏輯不變）
+# 原本 Excel 寫入流程（邏輯不變，時間改用台灣時區）
 # ---------------------------
 def update_excel(absentees, weather, manager_name=None):
     wb = openpyxl.load_workbook(TEMPLATE_PATH)
@@ -102,9 +115,9 @@ def update_excel(absentees, weather, manager_name=None):
             else:
                 upper_cell.value = "V"
 
-    # C4：yyyy年mm月dd日 星期X
+    # C4：yyyy年mm月dd日 星期X —— 使用台灣時區
     weekdays = ['一', '二', '三', '四', '五', '六', '日']
-    today = datetime.now()
+    today = now_tw()
     ws_main["C4"].value = today.strftime(f"%Y年%m月%d日 星期{weekdays[today.weekday()]}")
 
     # 天氣：P4/S4/V4 打 X
@@ -112,7 +125,7 @@ def update_excel(absentees, weather, manager_name=None):
     if weather in weather_map:
         ws_main[weather_map[weather]].value = "X"
 
-    # 休假調查表日期 I2
+    # 休假調查表日期 I2 —— 使用台灣時區
     ws_log["I2"].value = today.strftime("%Y年%m月%d日")
 
     # 休假調查表列表
@@ -151,6 +164,7 @@ def update_excel(absentees, weather, manager_name=None):
         ws_main["S69"].value = f"移工管理員：吳廷湘 {manager_name}"
 
     os.makedirs(OUTPUT_FOLDER, exist_ok=True)
+    # 產出檔名 —— 使用台灣時區的日期
     output_file = f"{OUTPUT_FOLDER}/每天出工統計表_{today.strftime('%Y-%m-%d')}.xlsx"
     wb.save(output_file)
     wb.close()
@@ -210,7 +224,12 @@ def index():
 #（可選）健康檢查
 @app.route('/health')
 def health():
-    return {"ok": True, "template_exists": os.path.exists(TEMPLATE_PATH), "ids": len(VALID_EMP_IDS)}
+    return {
+        "ok": True,
+        "template_exists": os.path.exists(TEMPLATE_PATH),
+        "ids": len(VALID_EMP_IDS),
+        "now_tw": now_tw().isoformat()
+    }
 
 if __name__ == '__main__':
     # Render 建議綁定 0.0.0.0 與 PORT 環境變數
